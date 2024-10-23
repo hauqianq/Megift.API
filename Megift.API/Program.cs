@@ -1,4 +1,4 @@
-using Megift.API.Models;
+﻿using Megift.API.Models;
 using Microsoft.EntityFrameworkCore;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -29,6 +29,18 @@ builder.Services.AddCors(options =>
 
 
 var app = builder.Build();
+
+// Seed dữ liệu khi ứng dụng khởi động
+using (var scope = app.Services.CreateScope())
+{
+    var context = scope.ServiceProvider.GetRequiredService<MeGiftContext>();
+
+    // Đảm bảo cơ sở dữ liệu đã tồn tại
+    context.Database.EnsureCreated();
+
+    // Gọi phương thức SeedData để chèn dữ liệu giả
+    DataSeeder.SeedData(context);
+}
 
 // Configure the HTTP request pipeline.
 if (app.Environment.IsDevelopment())

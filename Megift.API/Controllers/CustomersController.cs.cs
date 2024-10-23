@@ -21,6 +21,7 @@ namespace Megift.Api.Controllers
             var customers = await _context.Customers.Select(customer => new
             {
                 Id = customer.Id,
+                Image = customer.Image,
                 Name = customer.Name,
                 Email = customer.Email,
                 ShippingAddress = customer.ShippingAddress

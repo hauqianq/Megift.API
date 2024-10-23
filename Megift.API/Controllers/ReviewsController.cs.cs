@@ -18,8 +18,9 @@ namespace Megift.Api.Controllers
         [HttpGet]
         public async Task<IActionResult> GetAllReviews()
         {
-            var reviews = await _context.Reviews.Select(review => new
+            var reviews = await _context.Reviews.Include(r=>r.Customer).Select(review => new
             {
+                Image = review.Customer.Image,
                 Name = review.Customer.Name,
                 Review = review.Description,
             }).ToListAsync();
