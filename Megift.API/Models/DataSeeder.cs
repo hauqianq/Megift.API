@@ -6,13 +6,12 @@ namespace Megift.API.Models
     {
         public static void SeedData(MeGiftContext context)
         {
-            // Kiểm tra nếu dữ liệu đã tồn tại, thì không seed lại
             if (context.Customers.Any() || context.Products.Any() || context.Orders.Any() || context.Reviews.Any())
             {
                 return;
             }
 
-            Randomizer.Seed = new Random(8675309); // Đặt seed để tạo dữ liệu giả có thể dự đoán
+            Randomizer.Seed = new Random(8675309); 
 
             #region Seed Customers
             var avartars = new[]
@@ -80,12 +79,33 @@ namespace Megift.API.Models
                 .RuleFor(p => p.Name, f => f.Commerce.ProductName())
                 .RuleFor(p => p.Sku, f => f.Commerce.Ean13()) // EAN13 giả lập cho SKU
                 .RuleFor(p => p.Price, f => f.Random.Long(100_000, 500_000)) // Giá nằm trong khoảng 100.000 - 500.000 VND
-                .RuleFor(p => p.Stock, f => f.Random.Int(0, 100).ToString()) // Số lượng tồn kho
-                .RuleFor(p => p.Image, f => f.PickRandom(imageUrls)); // Chọn URL ngẫu nhiên từ danh sách
+                .RuleFor(p => p.Slug, f => f.Lorem.Slug())
+                .RuleFor(p => p.Sku, f => f.Commerce.Ean13())
+                .RuleFor(p => p.Description, f => f.Lorem.Paragraph())
+                .RuleFor(p => p.Colors, f => f.Commerce.Color())
+                .RuleFor(p => p.Size, f => f.Commerce.ProductMaterial());
 
             var products = fakerProduct.Generate(30);
             context.Products.AddRange(products);
             context.SaveChanges();
+
+            var productImages = new List<ProductImage>();
+            foreach (var product in products)
+            {
+                foreach (var imageUrl in imageUrls)
+                {
+                    var productImage = new ProductImage
+                    {
+                        ProductId = product.Id,
+                        ImagePath = imageUrl
+                    };
+                    productImages.Add(productImage);
+                }
+            }
+
+            context.ProductImages.AddRange(productImages);
+            context.SaveChanges();
+
             #endregion
 
             #region Seed Orders

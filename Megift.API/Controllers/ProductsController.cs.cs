@@ -25,18 +25,17 @@ namespace Megift.Api.Controllers
             var products = await _context.Products.Select(product => new
             {
                 Id = product.Id,
-                Image = product.Image,
+                Image = product.ProductImages.FirstOrDefault(pi=>pi.ProductId == product.Id).ImagePath,
                 Name = product.Name,
                 Sku = product.Sku,
-                Price = product.Price,
-                Stock = product.Stock,
+                Price = product.Price
             }).ToListAsync();
             return Ok(products);
         }
 
         private async Task<string> UploadProductImage(IFormFile image)
         {
-            string firebaseBucket = _configuration["Firebase:StorageBucket"];
+            string firebaseBucket = _configuration["FirebaseConfiguration:StorageBucket"];
 
             var firebaseStorage = new FirebaseStorage(firebaseBucket);
 
@@ -48,27 +47,43 @@ namespace Megift.Api.Controllers
             return await task.GetDownloadUrlAsync();
         }
 
+        private async Task<List<ProductImage>> AddListImages(List<IFormFile> request)
+        {
+            List<ProductImage> images = new List<ProductImage>();
+            foreach (var image in request)
+            {
+                var img = new ProductImage()
+                {
+                    ImagePath = await UploadProductImage(image),
+                };
+                images.Add(img);
+            }
+            return images;
+        }
+
+
         [HttpPost]
-        public async Task<IActionResult> CreateProduct([FromBody] CreateProductRequestModel model)
+        public async Task<IActionResult> CreateProduct([FromForm] CreateProductRequestModel request)
         {
             if (!ModelState.IsValid)
             {
                 return BadRequest(ModelState);
             }
 
-            var product = new Product
+            _context.Products.Add(new Product()
             {
-                Name = model.Name,
-                Image = await UploadProductImage(model.ImageUrl),
-                Sku = model.Sku,
-                Price = model.Price,
-                Stock = model.Stock
-            };
-
-            _context.Products.Add(product);
+                Colors = request.Colors,
+                Description = request.Description,
+                Name = request.Name,
+                Price = request.Price,
+                Size = request.Size,
+                Sku = request.Sku,
+                Slug = request.Slug,
+                ProductImages = await AddListImages(request.Images)
+            });
             await _context.SaveChangesAsync();
 
-            return Ok(product);
+            return Ok();
         }
     }
 }
