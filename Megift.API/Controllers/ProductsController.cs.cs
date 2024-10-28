@@ -22,13 +22,14 @@ namespace Megift.Api.Controllers
         [HttpGet]
         public async Task<IActionResult> GetAllProducts()
         {
-            var products = await _context.Products.Select(product => new
+            var products = await _context.Products.Include(p => p.Category).Select(product => new
             {
-                Id = product.Id,
-                Image = product.ProductImages.FirstOrDefault(pi=>pi.ProductId == product.Id).ImagePath,
-                Name = product.Name,
-                Sku = product.Sku,
-                Price = product.Price
+                Id = product.ProductId,
+                Image = product.ImageUrl,
+                Name = product.ProductName,
+                Sku = product.StockQuantity,
+                Price = product.Price,
+                CategoryName = product.Category.CategoryName
             }).ToListAsync();
             return Ok(products);
         }
@@ -47,20 +48,6 @@ namespace Megift.Api.Controllers
             return await task.GetDownloadUrlAsync();
         }
 
-        private async Task<List<ProductImage>> AddListImages(List<IFormFile> request)
-        {
-            List<ProductImage> images = new List<ProductImage>();
-            foreach (var image in request)
-            {
-                var img = new ProductImage()
-                {
-                    ImagePath = await UploadProductImage(image),
-                };
-                images.Add(img);
-            }
-            return images;
-        }
-
 
         [HttpPost]
         public async Task<IActionResult> CreateProduct([FromForm] CreateProductRequestModel request)
@@ -70,20 +57,20 @@ namespace Megift.Api.Controllers
                 return BadRequest(ModelState);
             }
 
-            _context.Products.Add(new Product()
+            var product = new Product
             {
-                Colors = request.Colors,
-                Description = request.Description,
-                Name = request.Name,
+                ProductName = request.ProductName,
+                CategoryId = request.CategoryId,
                 Price = request.Price,
-                Size = request.Size,
-                Sku = request.Sku,
-                Slug = request.Slug,
-                ProductImages = await AddListImages(request.Images)
-            });
+                StockQuantity = request.StockQuantity,
+                Description = request.Description,
+                ImageUrl = await UploadProductImage(request.ImageUrl)
+            };
+
+            _context.Products.Add(product);
             await _context.SaveChangesAsync();
 
-            return Ok();
+            return Ok(product);
         }
     }
 }

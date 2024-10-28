@@ -18,13 +18,13 @@ namespace Megift.Api.Controllers
         [HttpGet]
         public async Task<IActionResult> GetAllCustomers()
         {
-            var customers = await _context.Customers.Select(customer => new
+            var customers = await _context.Customers.Include(c=>c.User).Select(customer => new
             {
-                Id = customer.Id,
-                Image = customer.Image,
-                Name = customer.Name,
-                Email = customer.Email,
-                ShippingAddress = customer.ShippingAddress
+                Id = customer.CustomerId,
+                //Image = customer.Image,
+                Name = customer.User.Username,
+                Email = customer.User.Email,
+                ShippingAddress = customer.Address
             }).ToListAsync();
             
             return Ok(customers);

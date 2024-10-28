@@ -18,11 +18,12 @@ namespace Megift.Api.Controllers
         [HttpGet]
         public async Task<IActionResult> GetAllOrders()
         {
-            var orders = await _context.Orders.Include(order => order.Customer).Select(order => new
+            var orders = await _context.Orders.Include(order => order.Customer).Include(order=>order.OrderDetails)
+                .Select(order => new
             {
-                ProductName = order.Product.Name,
+                ProductName = order.OrderDetails.FirstOrDefault().Product.ProductName,
                 Date = order.OrderDate,
-                Total = order.Total,
+                Total = order.TotalAmount,
                 Status = order.Status,
             }).ToListAsync();
             return Ok(orders);
