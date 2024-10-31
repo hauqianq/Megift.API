@@ -31,7 +31,7 @@ public partial class MeGiftContext : DbContext
     {
         modelBuilder.Entity<Category>(entity =>
         {
-            entity.HasKey(e => e.CategoryId).HasName("PK__Categori__19093A2B204389F7");
+            entity.HasKey(e => e.CategoryId).HasName("PK__Categori__19093A2B1E9295F5");
 
             entity.Property(e => e.CategoryId).HasColumnName("CategoryID");
             entity.Property(e => e.CategoryName)
@@ -42,7 +42,7 @@ public partial class MeGiftContext : DbContext
 
         modelBuilder.Entity<Customer>(entity =>
         {
-            entity.HasKey(e => e.CustomerId).HasName("PK__Customer__A4AE64B8802BB697");
+            entity.HasKey(e => e.CustomerId).HasName("PK__Customer__A4AE64B8D603F3C3");
 
             entity.Property(e => e.CustomerId).HasColumnName("CustomerID");
             entity.Property(e => e.Address).HasMaxLength(255);
@@ -58,7 +58,7 @@ public partial class MeGiftContext : DbContext
 
         modelBuilder.Entity<Order>(entity =>
         {
-            entity.HasKey(e => e.OrderId).HasName("PK__Orders__C3905BAF4195939A");
+            entity.HasKey(e => e.OrderId).HasName("PK__Orders__C3905BAFF950DA3E");
 
             entity.Property(e => e.OrderId).HasColumnName("OrderID");
             entity.Property(e => e.CustomerId).HasColumnName("CustomerID");
@@ -72,7 +72,7 @@ public partial class MeGiftContext : DbContext
 
         modelBuilder.Entity<OrderDetail>(entity =>
         {
-            entity.HasKey(e => e.OrderDetailId).HasName("PK__OrderDet__D3B9D30C6B200ECE");
+            entity.HasKey(e => e.OrderDetailId).HasName("PK__OrderDet__D3B9D30C15E78747");
 
             entity.Property(e => e.OrderDetailId).HasColumnName("OrderDetailID");
             entity.Property(e => e.OrderId).HasColumnName("OrderID");
@@ -90,7 +90,7 @@ public partial class MeGiftContext : DbContext
 
         modelBuilder.Entity<Product>(entity =>
         {
-            entity.HasKey(e => e.ProductId).HasName("PK__Products__B40CC6ED611FBE17");
+            entity.HasKey(e => e.ProductId).HasName("PK__Products__B40CC6ED51B1D32F");
 
             entity.Property(e => e.ProductId).HasColumnName("ProductID");
             entity.Property(e => e.CategoryId).HasColumnName("CategoryID");
@@ -110,7 +110,7 @@ public partial class MeGiftContext : DbContext
 
         modelBuilder.Entity<Review>(entity =>
         {
-            entity.HasKey(e => e.ReviewId).HasName("PK__Reviews__74BC79AE2C83B4C9");
+            entity.HasKey(e => e.ReviewId).HasName("PK__Reviews__74BC79AEE2D5FCA4");
 
             entity.Property(e => e.ReviewId).HasColumnName("ReviewID");
             entity.Property(e => e.Comment).HasMaxLength(255);
@@ -128,7 +128,7 @@ public partial class MeGiftContext : DbContext
 
         modelBuilder.Entity<User>(entity =>
         {
-            entity.HasKey(e => e.UserId).HasName("PK__Users__1788CCAC1B5C6337");
+            entity.HasKey(e => e.UserId).HasName("PK__Users__1788CCAC67B54424");
 
             entity.Property(e => e.UserId).HasColumnName("UserID");
             entity.Property(e => e.CreatedAt)

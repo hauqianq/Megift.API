@@ -4,16 +4,16 @@ using Megift.API.RequestModels;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 
-namespace Megift.Api.Controllers
+namespace Megift.API.Controllers
 {
     [Route("api/[controller]")]
     [ApiController]
-    public class ProductController : ControllerBase
+    public class ProductsController : ControllerBase
     {
         private readonly MeGiftContext _context;
         private readonly IConfiguration _configuration;
 
-        public ProductController(MeGiftContext context, IConfiguration configuration)
+        public ProductsController(MeGiftContext context, IConfiguration configuration)
         {
             _context = context;
             _configuration = configuration;
@@ -24,12 +24,13 @@ namespace Megift.Api.Controllers
         {
             var products = await _context.Products.Include(p => p.Category).Select(product => new
             {
-                Id = product.ProductId,
-                Image = product.ImageUrl,
-                Name = product.ProductName,
-                Sku = product.StockQuantity,
+                ProductId = product.ProductId,
+                ProductName = product.ProductName,
+                Category = product.Category.CategoryName,
                 Price = product.Price,
-                CategoryName = product.Category.CategoryName
+                StockQuantity = product.StockQuantity,
+                Description = product.Description,
+                ImageUrl = product.ImageUrl
             }).ToListAsync();
             return Ok(products);
         }
@@ -74,4 +75,3 @@ namespace Megift.Api.Controllers
         }
     }
 }
-

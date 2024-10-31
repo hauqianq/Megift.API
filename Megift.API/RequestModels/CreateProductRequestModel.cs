@@ -1,6 +1,4 @@
-﻿using Megift.API.Models;
-
-namespace Megift.API.RequestModels
+﻿namespace Megift.API.RequestModels
 {
     public class CreateProductRequestModel
     {
