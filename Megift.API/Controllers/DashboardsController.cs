@@ -17,62 +17,158 @@ namespace Megift.API.Controllers
             _context = context;
         }
 
-        [HttpGet("customer-stats")]
-        public IActionResult GetCustomerStats()
-        {
-            var totalCustomers = _context.Customers.Count();
-            var data = _context.Orders
-                .GroupBy(o => o.OrderDate.Value.Day)
-                .Select(g => new { day = g.Key.ToString("D2"), value = g.Count() })
-                .ToList();
-
-            var result = new
-            {
-                totalCustomers,
-                data
-            };
-
-            return Ok(result);
-        }
-
-        [HttpGet("payment-method-summary")]
-        public async Task<IActionResult> GetPaymentMethodSummary()
+        [HttpGet("customer")]
+        public async Task<IActionResult> GetCustomerSummary()
         {
             try
             {
-                // Truy vấn dữ liệu từ cơ sở dữ liệu trước, không sử dụng Enum.GetName trong LINQ query
-                var summaryData = await _context.Orders
-                    .Where(o => o.OrderType.HasValue)
-                    .GroupBy(o => o.OrderType.Value)
-                    .Select(g => new
-                    {
-                        OrderType = g.Key, // Lưu enum dưới dạng số nguyên
-                        Count = g.Count()
-                    })
-                    .ToListAsync();
+                int totalUsers = await _context.Users.CountAsync();
 
-                // Tính tổng số lượng bán hàng
-                var totalSales = await _context.Orders.SumAsync(o => o.TotalAmount) ?? 0;
+                DateTime today = DateTime.UtcNow.Date;
+                DateTime lastWeek = today.AddDays(-7);
 
-                // Sau khi dữ liệu đã được truy vấn, chuyển đổi OrderType từ enum sang chuỗi
-                var summary = summaryData.Select(item => new
-                {
-                    Method = Enum.GetName(typeof(OrderType), item.OrderType), // Chuyển enum sang chuỗi sau khi truy vấn
-                    Count = item.Count
-                }).ToList();
+                int lastWeekLogins = await _context.Users
+                    .Where(u => u.LastLogin.HasValue && u.LastLogin >= lastWeek && u.LastLogin < today)
+                    .CountAsync();
 
-                // Tạo cấu trúc JSON trả về
+                int currentDayLogins = await _context.Users
+                    .Where(u => u.LastLogin.HasValue && u.LastLogin >= today)
+                    .CountAsync();
+
                 var response = new
                 {
-                    TotalSales = totalSales,
-                    Data = summary
+                    TotalUsers = totalUsers,
+                    LastWeekLogins = lastWeekLogins,
+                    CurrentDayLogins = currentDayLogins
                 };
 
                 return Ok(response);
             }
             catch (Exception ex)
             {
-                return StatusCode(500, "An error occurred while retrieving data: " + ex.Message);
+                return StatusCode(500, $"Internal server error: {ex.Message}");
+            }
+        }
+
+        [HttpGet("best-selling")]
+        public async Task<IActionResult> GetBestSellingProducts()
+        {
+            try
+            {
+                var bestSellingProducts = await _context.OrderDetails
+                    .Include(od => od.Product)
+                    .Where(od => od.ProductId != null && od.Quantity != null)
+                    .GroupBy(od => od.Product)
+                    .Select(group => new
+                    {
+                        name = group.Key.ProductName,
+                        sales = group.Sum(od => od.Quantity) ?? 0
+                    })
+                    .OrderByDescending(product => product.sales)
+                    .ToListAsync();
+
+                return Ok(bestSellingProducts);
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, $"Internal server error: {ex.Message}");
+            }
+        }
+
+        [HttpGet("payment-methods")]
+        public async Task<IActionResult> GetPaymentMethodsSummary()
+        {
+            try
+            {
+                var paymentMethodsData = await _context.Orders
+                    .GroupBy(o => o.OrderType)
+                    .Select(group => new
+                    {
+                        method = ((OrderType)group.Key).ToString(),
+                        count = group.Count()
+                    })
+                    .ToListAsync();
+
+                return Ok(paymentMethodsData);
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, $"Internal server error: {ex.Message}");
+            }
+        }
+
+        [HttpGet("total-sales-last-week")]
+        public async Task<IActionResult> GetTotalSalesLastWeek()
+        {
+            try
+            {
+                DateTime today = DateTime.UtcNow.Date;
+                DateTime oneWeekAgo = today.AddDays(-6);
+
+                var salesData = await _context.Orders
+                    .Where(o => o.Status == "Completed" && o.OrderDate >= oneWeekAgo && o.OrderDate <= today)
+                    .GroupBy(o => o.OrderDate.Value.Date)
+                    .Select(group => new
+                    {
+                        name = group.Key.ToString("dd"),
+                        value = group.Sum(o => o.TotalAmount)
+                    })
+                    .OrderBy(result => result.name)
+                    .ToListAsync();
+
+                return Ok(salesData);
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, $"Internal server error: {ex.Message}");
+            }
+        }
+        [HttpGet("monthly-orders")]
+        public async Task<IActionResult> GetMonthlyOrderGoal()
+        {
+            try
+            {
+                DateTime firstDayOfMonth = new DateTime(DateTime.Now.Year, DateTime.Now.Month, 1);
+                DateTime today = DateTime.UtcNow;
+
+                int totalOrders = await _context.Orders.CountAsync();
+
+                int monthlyGoal = 50; // Ví dụ mục tiêu cố định cho số lượng đơn hàng hàng tháng
+
+                return Ok(new
+                {
+                    totalOrders = totalOrders,
+                    monthlyGoal = monthlyGoal
+                });
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, $"Internal server error: {ex.Message}");
+            }
+        }
+
+        [HttpGet("recent-orders")]
+        public async Task<IActionResult> GetRecentOrders()
+        {
+            try
+            {
+                var recentOrders = await _context.Orders.Include(order => order.OrderDetails).ThenInclude(od => od.Product)
+                    .OrderByDescending(o => o.OrderDate)
+                    .Take(5)
+                    .Select(o => new
+                    {
+                        item = o.OrderDetails.FirstOrDefault().Product.ProductName,
+                        date = o.OrderDate.Value.ToString("dd MMM, yyyy"),
+                        total = o.TotalAmount,
+                        status = o.Status
+                    })
+                    .ToListAsync();
+
+                return Ok(recentOrders);
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, $"Internal server error: {ex.Message}");
             }
         }
     }
